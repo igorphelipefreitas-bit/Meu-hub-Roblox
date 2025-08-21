@@ -1,8 +1,7 @@
 --[[
 ProjectX Painel - By Liphyr
 - Painel de senha no início (dono: 3040igor)
-- Ao liberar, exibe painel do "P" para buscar brainrot e usar webhook/teleporte
-- Botão "Get Key" com link do Discord
+- Agora busca keys do arquivo online!
 ]]
 
 local Players = game:GetService("Players")
@@ -18,15 +17,22 @@ local searching = false
 
 -- Senha principal (dono)
 local DONO_SENHA = "3040igor"
--- Array de keys (agora só sua key de dono)
-local allowedKeys = {
-    -- Só DONO_SENHA
-}
 
+-- URL do arquivo de keys
+local keysURL = "https://raw.githubusercontent.com/igorphelipefreitas-bit/Meu-hub-Roblox/main/keys.txt"
+
+-- Função para buscar keys online e verificar senha
 local function senhaValida(senha)
     if senha == DONO_SENHA then return true end
-    for _,v in ipairs(allowedKeys) do
-        if v == senha then return true end
+    local ok, todasKeys = pcall(function()
+        return game:HttpGet(keysURL)
+    end)
+    if ok and todasKeys then
+        for key in string.gmatch(todasKeys, "[^\r\n]+") do
+            if senha == key then
+                return true
+            end
+        end
     end
     return false
 end
@@ -160,7 +166,6 @@ local function criarPainel()
     mainFrame.BackgroundTransparency = 1
     mainFrame.Parent = ScreenGui
 
-    -- Bolinha clicável
     local bola = Instance.new("ImageButton")
     bola.Size = UDim2.new(0, 64, 0, 64)
     bola.Position = UDim2.new(0.5, -32, 0, 0)
@@ -179,7 +184,6 @@ local function criarPainel()
     pLabel.TextScaled = true
     pLabel.Parent = bola
 
-    -- Efeito de flutuação
     spawn(function()
         while ScreenGui.Parent do
             bola.Position = UDim2.new(0.5, -32, 0, math.sin(tick()*2)*8)
@@ -187,7 +191,6 @@ local function criarPainel()
         end
     end)
 
-    -- Clique para iniciar a busca
     bola.MouseButton1Click:Connect(function()
         if searching then return end
         searching = true
@@ -196,7 +199,6 @@ local function criarPainel()
         notify("PROCURANDO BRAINROT", 6)
         spawn(function()
             local found = false
-            -- Função para verificar brainrot
             local function getMostRareBrainrot()
                 local mostRare = nil
                 local highestValue = -math.huge
